@@ -1,0 +1,28 @@
+#include "lora_handler.h"
+
+void LoraHandler::setup() {
+  LoRa.setPins(loraCs, loraRst, loraIrq);
+  
+  if (!LoRa.begin(923E6)) {
+    Serial.println("LoRa init failed. Check your connections!");
+    while(true); // Halt system
+  }
+  
+  LoRa.setTxPower(20);
+  LoRa.setSpreadingFactor(12);
+  LoRa.setSignalBandwidth(125E3);
+  Serial.println("LoRa initialized successfully!");
+}
+
+bool LoraHandler::sendData(const String& payload) {
+  LoRa.beginPacket();
+  LoRa.print(payload);
+  
+  if (LoRa.endPacket()) {
+    Serial.println("Packet sent: " + payload);
+    return true;
+  } else {
+    Serial.println("Packet send failed: " + payload);
+    return false;
+  }
+}
