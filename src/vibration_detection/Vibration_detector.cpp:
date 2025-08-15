@@ -1,0 +1,48 @@
+#include "vibration_detector.h"
+#include <math.h>
+
+VibrationDetector::VibrationDetector() : accel(12345) {}
+
+bool VibrationDetector::begin() {
+  if(!accel.begin()) {
+    return false;
+  }
+  accel.setRange(ADXL345_RANGE_16_G);
+  return true;
+}
+
+void VibrationDetector::calibrate() {
+  baseline[0] = 0; baseline[1] = 0; baseline[2] = 0;
+  
+  for(int i = 0; i < 10; i++) {
+    accel.getEvent(&event);
+    baseline[0] += event.acceleration.x;
+    baseline[1] += event.acceleration.y;
+    baseline[2] += event.acceleration.z;
+    delay(100);
+  }
+  
+  baseline[0] /= 10.0;
+  baseline[1] /= 10.0;
+  baseline[2] /= 10.0;
+}
+
+bool VibrationDetector::detectAnomaly(float threshold) {
+  accel.getEvent(&event);
+  
+  float dx = event.acceleration.x - baseline[0];
+  float dy = event.acceleration.y - baseline[1];
+  float dz = event.acceleration.z - baseline[2];
+  
+  float magnitude = sqrt(dx*dx + dy*dy + dz*dz);
+  return (magnitude > threshold);
+}
+
+float VibrationDetector::getVibrationMagnitude() {
+  accel.getEvent(&event);
+  return sqrt(
+    event.acceleration.x * event.acceleration.x +
+    event.acceleration.y * event.acceleration.y +
+    event.acceleration.z * event.acceleration.z
+  );
+}
